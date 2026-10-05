@@ -32,18 +32,6 @@ module "blog_vpc" {
   }
 }
 
-resource "aws_instance" "blog" {
-  ami                    = data.aws_ami.app_ami.id
-  instance_type          = var.instance_type
-  vpc_security_group_ids = [module.blog_sg.security_group_id]
-
-  subnet_id              = module.blog_vpc.public_subnets[0]
-
-  tags = {
-    Name = "Learning Terraform"
-  }
-}
-
 module "blog_sg" {
   source              = "terraform-aws-modules/security-group/aws"
   version             = "4.13.0"
@@ -86,11 +74,11 @@ resource "aws_security_group_rule" "blog_https_in" {
 }
 
 resource "aws_security_group_rule" "blog_everything_oug" {
-  type        = "egress"
-  from_port   = 0
-  to_port     = 0
-  protocol    = -1
-  cidr_blocks = ["0.0.0.0/0"]
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = -1
+  cidr_blocks       = ["0.0.0.0/0"]
 
   security_group_id = aws_security_group.blog.id
 }
@@ -98,9 +86,9 @@ resource "aws_security_group_rule" "blog_everything_oug" {
 module "blog_alb" {
   source = "terraform-aws-modules/alb/aws"
 
-  name    = "blog-alb"
-  vpc_id  = module.blog_vpc.vpc_id
-  subnets = module.blog_vpc.public_subnets
+  name            = "blog-alb"
+  vpc_id          = module.blog_vpc.vpc_id
+  subnets         = module.blog_vpc.public_subnets
 
   security_groups = [module.blog_sg.security_group_id]
 
@@ -108,7 +96,7 @@ module "blog_alb" {
     blog-http = {
       port     = 80
       protocol = "HTTP"
-      forward = {
+      forward  = {
         target_group_arn = aws_lb_target_group.blog.arn
       }
     }
@@ -130,4 +118,28 @@ resource "aws_lb_target_group_attachment" "blog" {
   target_group_arn = aws_lb_target_group.blog.arn
   target_id        = aws_instance.blog.id
   port             = 80
+}
+
+module "bog_autoscaling" {
+  source  = "terraform-aws-modules/autoscaling/aws"
+  version = "9.0.2"
+
+  name = "blog"
+
+  min_size = 1
+  max_size = 2
+
+  vpc_zone_identifier = module.blog_vpc.public_subnets
+
+  launch_template_name = "blog"
+
+  security_groups        = [module.blog_sg.security_group_id]
+  instance_type          = var.instance_type
+  image_id               = data.aws_ami.app_ami.id
+  
+  traffic_source_attachments = {
+    blog_alb = {
+      traffic_source_identifier = aws_lb_target_group.blog.arn
+    }
+  }
 }
