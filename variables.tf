@@ -11,8 +11,8 @@ variable "ami_filter" {
   })
 
   default = {
-    name   = "*64bit*tomcat*linux*"
-    owner = "amazon"
+    name   = "apache-tomcat-*-amzn-linux.x86_64*"
+    owner = "345002264488"
   }
 }
 
