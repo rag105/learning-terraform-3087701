@@ -24,5 +24,22 @@ moved {
     to   = module.dev.aws_lb_target_group.blog
 }
 
+moved {
+    from = aws_security_group.blog
+    to   = module.dev.aws_security_group.blog
+}
 
+moved {
+    from = aws_security_group_rule.blog_http_in
+    to   = module.dev.aws_security_group_rule.blog_http_in
+}
 
+moved {
+    from = aws_security_group_rule.blog_https_in
+    to   = module.dev.aws_security_group_rule.blog_https_in
+}
+
+moved {
+    from = aws_security_group_rule.blog_everything_oug
+    to   = module.dev.aws_security_group_rule.blog_everything_oug
+}
